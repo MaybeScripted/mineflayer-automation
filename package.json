@@ -1,0 +1,15 @@
+{
+  "name": "mineflayer-automation",
+  "version": "0.0.1",
+  "description": "A basic Mineflayer bot for Minecraft automation",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "mineflayer": "^4.15.0"
+  },
+  "keywords": ["minecraft", "bot", "mineflayer"],
+  "author": "MaybeScripted",
+  "license": "MIT"
+}

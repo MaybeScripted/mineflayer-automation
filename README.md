@@ -1,4 +1,6 @@
-# Mineflayer Automation Bot
+# Mineflayer Automation Bot - BASIC BRANCH
+
+this branch serves to be used as all the basics. a "start from scratch" area. it will lack and be behind due to obvious reasons
 
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 [![Mineflayer](https://img.shields.io/badge/Mineflayer-Latest-blue.svg)](https://github.com/PrismarineJS/mineflayer)

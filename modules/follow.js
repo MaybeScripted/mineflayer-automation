@@ -121,19 +121,20 @@ module.exports = {
   },
 
   startFollowing(username) {
-    if (this.isFollowing) {
-      this.bot.chat(`Already following ${this.targetPlayer}. Use "@Bot stop following" to stop first.`);
-      return;
-    }
-
     const target = this.bot.players[username];
     if (!target?.entity) {
       this.bot.chat(`idk where ${username} is. They might be too far away.`);
       return;
     }
 
+    // hot-switch if already following someone
+    if (this.isFollowing) {
+      this.bot.chat(`Switching from ${this.targetPlayer} to ${username}!`);
+    } else {
+      this.bot.chat(`Now following ${username}!`);
+    }
+
     this.setTarget(username, target.entity);
-    this.bot.chat(`Now following ${username}!`);
     this.startFollowingSystem();
   },
 
@@ -148,6 +149,11 @@ module.exports = {
       this.bot.chat('Pathfinder not ready. Please wait a moment.');
       this.reset();
       return;
+    }
+
+    // and also clear any existing pathfinder goal for hot-switching
+    if (this.bot.pathfinder) {
+      this.bot.pathfinder.setGoal(null);
     }
 
     this.bot.pathfinder.setMovements(this.movements);

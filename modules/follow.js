@@ -1,4 +1,4 @@
-// follow module - handles @Bot follow commands with smart pathfinding and auto-eat
+// follow module. it like handles @Bot follow commands with smart pathfinding and auto-eat
 
 const whitelist = require('../utilities/whitelist');
 const pathfinder = require('mineflayer-pathfinder').pathfinder;
@@ -11,6 +11,7 @@ module.exports = {
   targetPlayer: null,
   targetEntity: null,
   intervals: {},
+  eventsBound: false,
   
   init(bot) {
     this.bot = bot;
@@ -24,7 +25,7 @@ module.exports = {
       this.setupMovements();
       this.setupAutoEat();
       this.setupHumanBehaviors();
-      console.log('Follow module initialized successfully');
+      this.setupPathfinderEvents();
     } catch (error) {
       console.error('Failed to initialize follow module:', error.message);
     }
@@ -59,7 +60,6 @@ module.exports = {
         strictErrors: false
       });
       this.bot.autoEat.enableAuto();
-      console.log('Auto-eat enabled');
     } catch (error) {
       console.log('Auto-eat not available');
     }
@@ -134,34 +134,30 @@ module.exports = {
       this.bot.chat(`Now following ${username}!`);
     }
 
-    this.setTarget(username, target.entity);
+    this.targetPlayer = username;
+    this.targetEntity = target.entity;
+    this.isFollowing = true;
     this.startFollowingSystem();
   },
 
-  setTarget(player, entity) {
-    this.targetPlayer = player;
-    this.targetEntity = entity;
-    this.isFollowing = true;
-  },
-
   startFollowingSystem() {
-    if (!this.bot.pathfinder || !this.movements) {
+    if (!this.bot?.pathfinder || !this.movements) {
       this.bot.chat('Pathfinder not ready. Please wait a moment.');
       this.reset();
       return;
     }
 
     // and also clear any existing pathfinder goal for hot-switching
-    if (this.bot.pathfinder) {
-      this.bot.pathfinder.setGoal(null);
-    }
+    this.clearGoal();
 
     this.bot.pathfinder.setMovements(this.movements);
-    this.setupPathfinderEvents();
     this.startMovementSystem();
   },
 
   setupPathfinderEvents() {
+    if (this.eventsBound) return;
+    this.eventsBound = true;
+
     this.bot.on('goal_reached', () => {
       if (!this.isFollowing) return;
       if (Math.random() < 0.3) this.bot.chat(`I'm here!`);
@@ -203,25 +199,16 @@ module.exports = {
   },
 
   usePathfinderMovement() {
-    if (this.bot.pathfinder && this.targetEntity) {
-      const distance = 1.5 + Math.random() * 1;
-      const goal = new GoalFollow(this.targetEntity, distance);
-      this.bot.pathfinder.setGoal(goal, true);
-    }
+    const distance = 1.5 + Math.random() * 1;
+    this.setFollowGoal(distance, true);
   },
 
   resumePathfinding() {
-    if (this.isFollowing && this.targetEntity) {
-      const goal = new GoalFollow(this.targetEntity, 2);
-      this.bot.pathfinder.setGoal(goal, true);
-    }
+    this.setFollowGoal(2, true);
   },
 
   updateFollowDistance(distance) {
-    if (this.bot.pathfinder && this.targetEntity) {
-      const goal = new GoalFollow(this.targetEntity, distance);
-      this.bot.pathfinder.setGoal(goal, true);
-    }
+    this.setFollowGoal(distance, true);
   },
 
   stopFollowing() {
@@ -235,7 +222,7 @@ module.exports = {
   },
 
   reset() {
-    if (this.bot.pathfinder) this.bot.pathfinder.setGoal(null);
+    this.clearGoal();
     
     this.bot.setControlState('forward', false);
     this.bot.setControlState('sprint', false);
@@ -250,5 +237,16 @@ module.exports = {
   clearIntervals() {
     Object.values(this.intervals).forEach(interval => clearInterval(interval));
     this.intervals = {};
+  },
+
+  // helpers
+  clearGoal() {
+    if (this.bot?.pathfinder) this.bot.pathfinder.setGoal(null);
+  },
+
+  setFollowGoal(distance = 2, dynamic = true) {
+    if (!this.isFollowing || !this.targetEntity || !this.bot?.pathfinder) return;
+    const goal = new GoalFollow(this.targetEntity, distance);
+    this.bot.pathfinder.setGoal(goal, dynamic);
   }
 };

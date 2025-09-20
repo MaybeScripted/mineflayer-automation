@@ -1,4 +1,6 @@
 const mineflayer = require('mineflayer');
+const { setupEventHandlers } = require('./utilities/eventHandlers');
+const ModuleManager = require('./modules');
 
 // Bot config
 const bot = mineflayer.createBot({
@@ -8,30 +10,10 @@ const bot = mineflayer.createBot({
   auth: 'offline'       // 'offline' for offline mode (omg who would've fucking guessed that), and 'microsoft' for when online-mode=true
 });
 
-// Event handler thingies
-bot.on('spawn', () => {
-  console.log('Bot has joined the server!');
-  console.log(`Position: ${bot.entity.position.x}, ${bot.entity.position.y}, ${bot.entity.position.z}`);
-});
+setupEventHandlers(bot);
 
-bot.on('kicked', (reason) => {
-  console.log(`Bot was kicked: ${reason}`);
-  process.exit(1);
-});
+// this just init's the module manager and loads modules
+const moduleManager = new ModuleManager(bot);
+moduleManager.loadModules();
 
-bot.on('error', (err) => {
-  console.error(`An error occurred: ${err}`);
-  process.exit(1);
-});
-
-bot.on('end', () => {
-  console.log('Bot disconnected from server');
-  process.exit(0);
-});
-
-// a simple keep alive
-process.on('SIGINT', () => {
-  console.log('\nShutting down bot...');
-  bot.quit();
-  process.exit(0);
-});
+console.log('Bot initialized with modules:', moduleManager.getAllModules());
